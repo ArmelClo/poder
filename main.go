@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/bougou/go-ipmi"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 var client, ctx = initClient()
@@ -29,18 +31,24 @@ func initClient() (*ipmi.Client, context.Context) {
 	}
 	username := os.Getenv("KEVIN_USER")
 	password := os.Getenv("KEVIN_PASSWORD")
-
-	client, err := ipmi.NewClient(host, port, username, password)
-	if err != nil {
-		panic(err)
-	}
-
 	ctx := context.Background()
-	if err := client.Connect(ctx); err != nil {
-		panic(err)
+
+	for {
+		client, err := ipmi.NewClient(host, port, username, password)
+		if err != nil {
+			fmt.Println(err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		if err := client.Connect(ctx); err != nil {
+			fmt.Println(err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		return client, ctx
 	}
 
-	return client, ctx
 }
 
 func main() {
