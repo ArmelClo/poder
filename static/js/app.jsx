@@ -9,13 +9,11 @@ const App = () => {
                 const response = await fetch("/status");
                 const data = await response.json();
 
-                console.log(data.status.PowerIsOn)
-
                 if (data.status.PowerIsOn){
-                    setState({text: "Started", color: "bg-success"});
+                    setState({text: "Started", color: "bg-success", temperature: data.temperature});
                     return
                 }
-                setState({text: "Stoped", color: "bg-danger"});
+                setState({text: "Stoped", color: "bg-danger", temperature: data.temperature});
             } catch (error) {
                 console.error(error);
             }
@@ -25,11 +23,12 @@ const App = () => {
     return (
         <Fragment>
             <div className="d-flex justify-content-center mb-3 mt-3">
-                <div className={"p-3 mb-2 rounded " + state.color}>Status: {state.text}</div>
+                <div className={"p-3 m-2 rounded " + state.color}>Status: {state.text}</div>
+                <div className={"p-3 m-2 rounded " + state.color}>Temperature: {state.temperature}</div>
             </div>
 
             <div className="d-flex justify-content-center mb-3">
-               <img src="/img/kevin.jpg" alt="kevin"/>
+            <img src="/img/kevin.jpg" alt="kevin"/>
             </div>
 
             <div className="d-flex justify-content-evenly">
