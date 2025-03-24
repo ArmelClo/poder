@@ -15,7 +15,9 @@ import (
 )
 
 var client, ctx = initClient()
-var temperature *float64 = nil
+var temperature float64
+var maxTemp float64
+var isManualRPM = false
 
 func initClient() (*ipmi.Client, context.Context) {
 	if err := godotenv.Load(); err != nil {
@@ -68,7 +70,8 @@ func main() {
 
 		c.JSON(http.StatusOK, gin.H{
 			"status":      status,
-			"temperature": *temperature,
+			"temperature": temperature,
+			"maxTemp":     maxTemp,
 		})
 	})
 
@@ -94,9 +97,10 @@ func main() {
 }
 
 func temp() {
+	_, _ = client.RawCommand(ctx, ipmi.NetFnOEMSupermicroRequest, 0x30, []byte{0x01, 0x01}, "Set automatic fan RPM")
 	defer client.RawCommand(ctx, ipmi.NetFnOEMSupermicroRequest, 0x30, []byte{0x01, 0x01}, "Set automatic fan RPM")
 
-	maxTemp, _ := strconv.ParseFloat(os.Getenv("MAX_TEMP"), 8)
+	maxTemp, _ = strconv.ParseFloat(os.Getenv("MAX_TEMP"), 8)
 	fanRPM, _ := strconv.Atoi(os.Getenv("FAN_RPM"))
 
 	for {
@@ -105,13 +109,17 @@ func temp() {
 			fmt.Println(err)
 			continue
 		}
-		temperature = &rs.Full.SensorValue
+		temperature = rs.Full.SensorValue
 
-		if *temperature < maxTemp {
-			client.RawCommand(ctx, ipmi.NetFnOEMSupermicroRequest, 0x30, []byte{0x01, 0x00}, "Set manual fan RPM")
-			client.RawCommand(ctx, ipmi.NetFnOEMSupermicroRequest, 0x30, []byte{0x02, 0xff, byte(fanRPM)}, "Set fan RPM to 5%")
-		} else {
-			client.RawCommand(ctx, ipmi.NetFnOEMSupermicroRequest, 0x30, []byte{0x01, 0x01}, "Set automatic fan RPM")
+		if temperature < maxTemp {
+			if !isManualRPM {
+				_, _ = client.RawCommand(ctx, ipmi.NetFnOEMSupermicroRequest, 0x30, []byte{0x01, 0x00}, "Set manual fan RPM")
+				_, _ = client.RawCommand(ctx, ipmi.NetFnOEMSupermicroRequest, 0x30, []byte{0x02, 0xff, byte(fanRPM)}, "Set fan RPM to 5%")
+				isManualRPM = true
+			}
+		} else if isManualRPM {
+			_, _ = client.RawCommand(ctx, ipmi.NetFnOEMSupermicroRequest, 0x30, []byte{0x01, 0x01}, "Set automatic fan RPM")
+			isManualRPM = false
 		}
 
 		time.Sleep(10 * time.Second)

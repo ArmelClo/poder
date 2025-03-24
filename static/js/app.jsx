@@ -9,11 +9,22 @@ const App = () => {
                 const response = await fetch("/status");
                 const data = await response.json();
 
+                let statusColor, temperature, temperatureColor
                 if (data.status.PowerIsOn){
-                    setState({text: "Started", color: "bg-success", temperature: data.temperature});
-                    return
+                    statusColor = "bg-success"
+                    temperature = data.temperature
+                    if (data.temperature > data.maxTemp -10 ) {
+                        temperatureColor = "bg-warning"
+                    } else {
+                        temperatureColor = "bg-success"
+                    }
+                } else {
+                    statusColor = "bg-danger"
+                    temperature = null
+                    temperatureColor = null
                 }
-                setState({text: "Stoped", color: "bg-danger", temperature: data.temperature});
+
+                setState({text: "Started", color: statusColor, temperature: temperature, temperatureColor: temperatureColor});
             } catch (error) {
                 console.error(error);
             }
@@ -24,7 +35,9 @@ const App = () => {
         <Fragment>
             <div className="d-flex justify-content-center mb-3 mt-3">
                 <div className={"p-3 m-2 rounded " + state.color}>Status: {state.text}</div>
-                <div className={"p-3 m-2 rounded " + state.color}>Temperature: {state.temperature}</div>
+                {state.temperatureColor === null ||
+                    <div className={"p-3 m-2 rounded " + state.temperatureColor}>Temperature: {state.temperature}</div>
+                }
             </div>
 
             <div className="d-flex justify-content-center mb-3">
