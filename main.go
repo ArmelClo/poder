@@ -80,7 +80,7 @@ func main() {
 		if err != nil {
 			return
 		}
-		c.Redirect(http.StatusPermanentRedirect, "/status")
+		c.JSON(http.StatusOK, nil)
 	})
 
 	r.GET("/stop", func(c *gin.Context) {
@@ -88,8 +88,9 @@ func main() {
 		if err != nil {
 			return
 		}
-		c.Redirect(http.StatusPermanentRedirect, "/status")
+		c.JSON(http.StatusOK, nil)
 	})
+
 	err := r.Run()
 	if err != nil {
 		return

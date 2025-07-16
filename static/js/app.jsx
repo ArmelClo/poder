@@ -9,27 +9,32 @@ const App = () => {
                 const response = await fetch("/status");
                 const data = await response.json();
 
-                let statusColor, temperature, temperatureColor
+                let statusColor, temperature, temperatureColor, text
                 if (data.status.PowerIsOn){
                     statusColor = "bg-success"
                     temperature = data.temperature
+                    text = "Started"
                     if (data.temperature > data.maxTemp -10 ) {
                         temperatureColor = "bg-warning"
                     } else {
                         temperatureColor = "bg-success"
                     }
                 } else {
+                    text = "Stopped"
                     statusColor = "bg-danger"
                     temperature = null
                     temperatureColor = null
                 }
 
-                setState({text: "Started", color: statusColor, temperature: temperature, temperatureColor: temperatureColor});
+                setState({text: text, color: statusColor, temperature: temperature, temperatureColor: temperatureColor});
             } catch (error) {
                 console.error(error);
             }
         };
-        fetchData();
+        const intervalId = setInterval(fetchData, 10000); // 10000 milliseconds = 10 seconds
+        return () => {
+            clearInterval(intervalId);
+        };
     }, []); // add dependencies to re-run the effect when they change
     return (
         <Fragment>
@@ -45,12 +50,8 @@ const App = () => {
             </div>
 
             <div className="d-flex justify-content-evenly">
-                <a href="/start">
-                    <button type="button" className="btn btn-success">Start</button>
-                </a>
-                <a href="/stop">
-                    <button type="button" className="btn btn-danger">Stop</button>
-                </a>
+                <button type="button" onClick={() => fetch("/start")} className="btn btn-success">Start</button>
+                <button type="button" onClick={() => fetch("/stop")} className="btn btn-danger">Stop</button>
             </div>
         </Fragment>
     )
